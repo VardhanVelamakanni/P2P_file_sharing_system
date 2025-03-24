@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { IconUpload, IconX } from "@tabler/icons-react";
 import { useDropzone } from "react-dropzone";
-import { motion } from "framer-motion";
 import socket from "../socket";
 import { cn } from "../lib/utils";
 
@@ -16,10 +15,11 @@ const FileShare = () => {
 
   const peerConnection = useRef<RTCPeerConnection | null>(null);
   const dataChannel = useRef<RTCDataChannel | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const incomingFileBuffer = useRef<Uint8Array[]>([]);
   const incomingFileName = useRef<string | null>(null);
+  const incomingFileSize = useRef<number>(0);
+  const receivedSize = useRef<number>(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -27,55 +27,75 @@ const FileShare = () => {
     if (room) setRoomId(room);
   }, []);
 
-  const handleClick = () => fileInputRef.current?.click();
-  const handleRemove = () => setFiles([]);
-  const handleFileChange = (newFiles: File[]) => setFiles(newFiles);
-
-  const { getRootProps, getInputProps } = useDropzone({
-    multiple: false,
-    noClick: true,
-    onDrop: handleFileChange,
-    onDropRejected: (error) => console.error("❌ Drop rejected:", error),
-    onDragEnter: () => setIsHovering(true),
-    onDragLeave: () => setIsHovering(false),
-    onDragOver: () => setIsHovering(true),
-  });
-
-  const sendFile = async (file: File) => {
-    if (!file || !roomId) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("roomId", roomId);
-
-    try {
-      const res = await fetch("http://localhost:5000/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        console.log("✅ File uploaded and shared:", data);
-      } else {
-        console.error("❌ Upload error:", data.error);
-      }
-    } catch (err) {
-      console.error("❌ Upload failed:", err);
-    }
-  };
-
-  useEffect(() => {
-    socket.on("file-shared", (fileInfo) => {
-      const fileUrl = `http://localhost:5000${fileInfo.path}`;
-      setReceivedFiles((prev) => [...prev, { name: fileInfo.originalname, url: fileUrl }]);
-      console.log("📥 Received file info:", fileInfo);
-    });
-
-    return () => {
-      socket.off("file-shared");
-    };
+  const handleClick = useCallback(() => {
+    fileInputRef.current?.click();
   }, []);
+
+  const handleRemove = useCallback(() => {
+    setFiles([]);
+  }, []);
+
+  const handleFileChange = useCallback((newFiles: File[]) => {
+    setFiles(newFiles);
+  }, []);
+
+  const sendFile = useCallback(async () => {
+    const file = files[0];
+    if (!file || !dataChannel.current || dataChannel.current.readyState !== "open") return;
+
+    const chunkSize = 16 * 1024;
+    const buffer = await file.arrayBuffer();
+    const totalChunks = Math.ceil(buffer.byteLength / chunkSize);
+
+    dataChannel.current.send(JSON.stringify({ type: "metadata", name: file.name, size: buffer.byteLength }));
+
+    for (let i = 0; i < totalChunks; i++) {
+      const start = i * chunkSize;
+      const end = Math.min(buffer.byteLength, start + chunkSize);
+      const chunk = buffer.slice(start, end);
+      dataChannel.current.send(chunk);
+    }
+
+    console.log("✅ File sent successfully");
+  }, [files]);
+
+  const setupDataChannelListeners = (channel: RTCDataChannel) => {
+    channel.binaryType = "arraybuffer";
+
+    channel.onopen = () => {
+      console.log("📡 Data channel open");
+      setConnectionEstablished(true);
+    };
+
+    channel.onmessage = (event) => {
+      if (typeof event.data === "string") {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === "metadata") {
+            incomingFileName.current = message.name;
+            incomingFileSize.current = message.size;
+            incomingFileBuffer.current = [];
+            receivedSize.current = 0;
+          }
+        } catch (err) {
+          console.error("Invalid JSON:", err);
+        }
+      } else {
+        incomingFileBuffer.current.push(new Uint8Array(event.data));
+        receivedSize.current += event.data.byteLength;
+
+        if (receivedSize.current === incomingFileSize.current) {
+          const receivedBlob = new Blob(incomingFileBuffer.current);
+          const url = URL.createObjectURL(receivedBlob);
+          setReceivedFiles((prev) => [
+            ...prev,
+            { name: incomingFileName.current || "unknown", url },
+          ]);
+          console.log("📥 File received and assembled");
+        }
+      }
+    };
+  };
 
   useEffect(() => {
     if (!roomId) return;
@@ -83,10 +103,14 @@ const FileShare = () => {
     const pc = new RTCPeerConnection();
     peerConnection.current = pc;
 
-    dataChannel.current = pc.createDataChannel("chat");
-    dataChannel.current.onopen = () => {
-      console.log("📡 Data channel open");
-      setConnectionEstablished(true);
+    const createDataChannel = () => {
+      dataChannel.current = pc.createDataChannel("file");
+      setupDataChannelListeners(dataChannel.current);
+    };
+
+    pc.ondatachannel = (event) => {
+      dataChannel.current = event.channel;
+      setupDataChannelListeners(dataChannel.current);
     };
 
     pc.onicecandidate = (event) => {
@@ -97,10 +121,13 @@ const FileShare = () => {
 
     socket.emit("join-room", roomId);
 
-    socket.on("user-joined", async () => {
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      socket.emit("offer", { roomId, offer });
+    socket.on("user-joined", () => {
+      createDataChannel();
+      pc.createOffer()
+        .then((offer) => pc.setLocalDescription(offer))
+        .then(() => {
+          socket.emit("offer", { roomId, offer: pc.localDescription });
+        });
     });
 
     socket.on("offer", async (offer) => {
@@ -118,18 +145,28 @@ const FileShare = () => {
       try {
         await pc.addIceCandidate(new RTCIceCandidate(candidate));
       } catch (err) {
-        console.error("❌ Error adding ICE candidate:", err);
+        console.error("Error adding ICE candidate:", err);
       }
     });
 
     return () => {
+      socket.off("user-joined");
       socket.off("offer");
       socket.off("answer");
       socket.off("ice-candidate");
-      socket.off("user-joined");
       pc.close();
     };
   }, [roomId]);
+
+  const { getRootProps, getInputProps } = useDropzone({
+    multiple: false,
+    noClick: true,
+    onDrop: handleFileChange,
+    onDropRejected: (error) => console.error("Drop rejected:", error),
+    onDragEnter: () => setIsHovering(true),
+    onDragLeave: () => setIsHovering(false),
+    onDragOver: () => setIsHovering(true),
+  });
 
   return (
     <div className="w-full p-6" {...getRootProps()}>
@@ -139,16 +176,19 @@ const FileShare = () => {
           isHovering ? "ring-4 ring-blue-400 bg-blue-50 dark:bg-blue-950" : ""
         )}
         onClick={(e) => {
-          const target = e.target as HTMLElement;
-          if (!target.closest("button") && !target.closest("svg") && !target.closest("a")) {
-            handleClick();
-          }
+          const el = e.target as Element;
+          const isInteractive = el.closest("button") || el.closest("svg") || el.closest("a");
+          if (!isInteractive) handleClick();
         }}
       >
-        <input ref={fileInputRef} type="file" onChange={(e) => handleFileChange(Array.from(e.target.files || []))} className="hidden" />
         <input {...getInputProps()} />
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          onChange={(e) => handleFileChange(Array.from(e.target.files || []))}
+        />
 
-        {/* No zoom bg */}
         <div
           className="absolute inset-0 bg-cover bg-center z-0"
           style={{
@@ -164,7 +204,6 @@ const FileShare = () => {
             Drag & drop or click to upload
           </p>
 
-          {/* File Preview */}
           <div className="relative w-full mt-10 max-w-xl mx-auto">
             {files.length > 0 &&
               files.map((file, idx) => (
@@ -191,32 +230,28 @@ const FileShare = () => {
                     </p>
                   </div>
 
-                  <div className="flex text-sm flex-col md:flex-row items-start md:items-center w-full mt-2 justify-between text-neutral-600 dark:text-neutral-400">
-                    <p className="px-1 py-0.5 rounded-md bg-gray-100 dark:bg-neutral-800">
-                      {file.type}
-                    </p>
-                    <p>
-                      Modified {new Date(file.lastModified).toLocaleDateString()}
-                    </p>
-                  </div>
+                  <p className="text-sm mt-2 text-neutral-500 dark:text-neutral-400">
+                    {connectionEstablished ? "Ready to send" : "Waiting for peer..."}
+                  </p>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      sendFile(file);
-                    }}
-                    disabled={!connectionEstablished}
-                    className="mt-4 bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1 rounded disabled:opacity-50"
-                  >
-                    {connectionEstablished ? "Send" : "Waiting..."}
-                  </button>
+                  {connectionEstablished && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        sendFile();
+                      }}
+                      className="mt-4 px-4 py-1.5 text-sm font-medium rounded-md bg-blue-500 text-white hover:bg-blue-600 transition-all"
+                    >
+                      Send
+                    </button>
+                  )}
                 </div>
               ))}
 
             {!files.length && (
               <div
                 onClick={handleClick}
-                className="bg-white dark:bg-neutral-900 flex flex-col items-center justify-center h-32 mt-4 w-full max-w-[8rem] mx-auto rounded-md shadow-lg transition-all hover:shadow-xl"
+                className="bg-white dark:bg-neutral-900 flex flex-col items-center justify-center h-32 mt-4 w-full max-w-[8rem] mx-auto rounded-md shadow-lg transition-all hover:shadow-xl hover:ring-2 hover:ring-blue-400"
               >
                 <IconUpload className="w-10 h-10 text-neutral-300 dark:text-neutral-700" />
                 <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-2">Browse</p>
@@ -224,7 +259,6 @@ const FileShare = () => {
             )}
           </div>
 
-          {/* Received Files */}
           {receivedFiles.length > 0 && (
             <div className="mt-8 w-full max-w-xl">
               <h3 className="text-center text-lg font-semibold mb-2 text-neutral-700 dark:text-neutral-200">

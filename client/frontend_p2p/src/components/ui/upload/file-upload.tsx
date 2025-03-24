@@ -53,8 +53,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
   return (
     <div className="w-full" {...getRootProps()}>
       <motion.div
-        whileHover="animate"
-        className="p-10 group/file block rounded-lg cursor-pointer w-full relative overflow-hidden"
+        whileHover={{ scale: 1.02 }}
+        className={cn(
+          "p-10 group/file block rounded-lg cursor-pointer w-full relative overflow-hidden transition-all duration-200",
+          "hover:ring-4 hover:ring-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950"
+        )}
         onClick={handleClick}
       >
         <input
