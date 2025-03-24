@@ -2,55 +2,65 @@
 import React from "react";
 import { StickyScroll } from "../component2/sticky-scroll-reveal";
 
-
 const content = [
   {
-    title: "Collaborative Editing",
+    title: "Room-Based Peer Connection",
     description:
-      "Work together in real time with your team, clients, and stakeholders. Collaborate on documents, share ideas, and make decisions quickly. With our platform, you can streamline your workflow and increase productivity.",
+      "Users enter the same room ID to establish a private connection. This room ID is used to coordinate signaling between peers using Socket.IO. Once both users are in the room, a secure WebRTC connection is negotiated for real-time, direct data exchange without involving any server-side file storage.",
     content: (
-      <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(to_bottom_right,var(--cyan-500),var(--emerald-500))] text-white">
-        Collaborative Editing
-      </div>
-    ),
-  },
-  {
-    title: "Real time changes",
-    description:
-      "See changes as they happen. With our platform, you can track every modification in real time. No more confusion about the latest version of your project. Say goodbye to the chaos of version control and embrace the simplicity of real-time updates.",
-    content: (
-      <div className="flex h-full w-full items-center justify-center text-white">
+      <div className="flex h-full w-full items-center justify-center">
         <img
-          src="/linear.webp"
-          width={300}
-          height={300}
-          className="h-full w-full object-cover"
-          alt="linear board demo"
+          src="/assets/peer.png"
+          alt="Room-Based Connection"
+          className="h-full w-full object-cover rounded-xl"
         />
       </div>
     ),
   },
   {
-    title: "Version control",
+    title: "WebRTC for Direct Transfer",
     description:
-      "Experience real-time updates and never stress about version control again. Our platform ensures that you're always working on the most recent version of your project, eliminating the need for constant manual updates. Stay in the loop, keep your team aligned, and maintain the flow of your work without any interruptions.",
+      "WebRTC handles the actual file transmission between browsers. It creates a peer-to-peer data channel that allows large files to be sent efficiently and securely without uploading to a server. This reduces latency and ensures privacy since files travel directly from one user's device to another’s.",
     content: (
-      <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(to_bottom_right,var(--orange-500),var(--yellow-500))] text-white">
-        Version control
+      <div className="flex h-full w-full items-center justify-center">
+        <img
+          src="/assets/quick.jpg"
+          alt="WebRTC Transfer"
+          className="h-full w-full object-cover rounded-xl"
+        />
       </div>
     ),
   },
   {
-    title: "Running out of content",
+    title: "Chunked File Sending",
     description:
-      "Experience real-time updates and never stress about version control again. Our platform ensures that you're always working on the most recent version of your project, eliminating the need for constant manual updates. Stay in the loop, keep your team aligned, and maintain the flow of your work without any interruptions.",
+      "Files are split into small chunks before being sent over the WebRTC data channel. This helps maintain a smooth transfer, especially for large files, and avoids overloading the connection. Each chunk is reassembled on the receiving side to reconstruct the original file accurately and reliably.",
     content: (
-      <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(to_bottom_right,var(--cyan-500),var(--emerald-500))] text-white">
-        Running out of content
+      <div className="flex h-full w-full items-center justify-center">
+        <img
+          src="/assets/chunks.jpg"
+          alt="Chunked Sending"
+          className="h-full w-full object-cover rounded-xl"
+        />
+      </div>
+    ),
+  },
+  {
+    title: "Real-Time Communication with Socket.IO",
+    description:
+      "Socket.IO is used only for the initial signaling process—exchanging metadata like offers, answers, and ICE candidates. It helps both peers find each other and set up the WebRTC connection. Once the connection is established, all file data flows peer-to-peer without relying on the server.",
+    content: (
+      <div className="flex h-full w-full items-center justify-center">
+        <img
+          src="/assets/realtime.jpg"
+          alt="Socket.IO Signaling"
+          className="h-full w-full object-cover rounded-xl"
+        />
       </div>
     ),
   },
 ];
+
 export function StickyScrollRevealDemo() {
   return (
     <div className="w-full py-4">

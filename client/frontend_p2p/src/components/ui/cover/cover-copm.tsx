@@ -1,35 +1,40 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Cover } from "./cover";
-import FileShare from "../../FileShare"; // Adjust path if needed
+import FileShare from "../../FileShare";
+import { PlaceholdersAndVanishInput } from "../roombar/placeholders-and-vanish-input";
 
 export function CoverDemo() {
-  const [roomCode, setRoomCode] = useState("");
   const [joined, setJoined] = useState(false);
+  const [roomCode, setRoomCode] = useState("");
 
-  // ✅ Auto-join if URL has ?room=xyz
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const roomFromURL = params.get("room");
+  const placeholders = [
+    "Enter Room Code",
+    "Your secret warp key",
+    "Room ID please...",
+    "Drop a room code to enter",
+    "Where are we sending files?",
+  ];
 
-    if (roomFromURL) {
-      setRoomCode(roomFromURL);
-      setJoined(true);
-      console.log("✅ Auto-joined room from URL:", roomFromURL);
-    }
-  }, []);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setRoomCode(e.target.value);
+  };
 
-  const handleJoinRoom = () => {
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
     if (roomCode.trim()) {
-      setJoined(true);
+      // Wait 0.75 seconds before joining
+      setTimeout(() => {
+        // Set URL parameter
+        const url = new URL(window.location.href);
+        url.searchParams.set("room", roomCode);
+        window.history.replaceState({}, "", url.toString());
 
-      // ✅ Add ?room=xyz to URL so FileShare can use it
-      const url = new URL(window.location.href);
-      url.searchParams.set("room", roomCode);
-      window.history.replaceState({}, "", url.toString());
-
-      console.log("✅ Manually joined room:", roomCode);
+        setJoined(true);
+        console.log("✅ Joined Room:", roomCode);
+      }, 750);
     }
   };
 
@@ -40,33 +45,26 @@ export function CoverDemo() {
         Share files at <Cover>warp speed</Cover>
       </h1>
 
-      {/* Subtitle */}
-      <h2 className="text-2xl md:text-3xl lg:text-4xl font-medium max-w-4xl mx-auto text-center relative z-20 pb-10 bg-clip-text text-transparent bg-gradient-to-b from-neutral-800 via-neutral-700 to-neutral-700 dark:from-neutral-800">
-        {joined ? `Room: ${roomCode}` : "Join a Room to Share Files"}
-      </h2>
-
-      {/* Room Join Input (only if not joined yet) */}
+      {/* Room Input */}
       {!joined && (
-        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md mx-auto z-20 pb-10">
-          <input
-            type="text"
-            placeholder="Enter Room Code"
-            value={roomCode}
-            onChange={(e) => setRoomCode(e.target.value)}
-            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white placeholder-gray-500"
+        <div className="w-full max-w-2xl mx-auto z-20 pt-36">
+          <PlaceholdersAndVanishInput
+            placeholders={placeholders}
+            onChange={handleChange}
+            onSubmit={onSubmit}
           />
-          <button
-            onClick={handleJoinRoom}
-            className="px-4 py-2 bg-black text-white rounded-md hover:bg-neutral-800 transition-colors"
-          >
-            Join
-          </button>
         </div>
       )}
 
-      {/* FileShare appears after joining */}
+      {/* Room ID Heading + Upload UI */}
       {joined && (
-        <div className="w-full max-w-4xl mx-auto z-20">
+        <div className="w-full max-w-4xl mx-auto z-20 space-y-6 pt-20">
+          {/* Room ID Display */}
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-center bg-clip-text text-transparent bg-gradient-to-b from-neutral-800 via-neutral-700 to-neutral-700 dark:from-neutral-100 dark:via-neutral-200 dark:to-neutral-300">
+            Room ID: <span className="font-mono">{roomCode}</span>
+          </h2>
+
+          {/* File Upload */}
           <FileShare />
         </div>
       )}

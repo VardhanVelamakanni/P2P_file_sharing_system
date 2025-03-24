@@ -40,9 +40,9 @@ export const StickyScroll = ({
   });
 
   const linearGradients = [
-    "linear-gradient(to bottom right, #06b6d4, #10b981)",
-    "linear-gradient(to bottom right, #ec4899, #6366f1)",
-    "linear-gradient(to bottom right, #f97316, #eab308)",
+    "linear-gradient(to bottom right, transparent, transparent)",
+    "linear-gradient(to bottom right, transparent, transparent)",
+    "linear-gradient(to bottom right, transparent, transparent)",
   ];
 
   const [backgroundGradient, setBackgroundGradient] = useState(
@@ -57,7 +57,7 @@ export const StickyScroll = ({
     <div className="bg-black py-8">
       <h2 className="text-center text-2xl font-semibold text-white mb-8">
         Want to know how it works?{" "}
-        <span className="text-teal-400">Peer to Peer is magic</span>
+        <span className="text-blue-400">Peer to Peer is magic</span>
       </h2>
 
       <motion.div

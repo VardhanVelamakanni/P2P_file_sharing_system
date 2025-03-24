@@ -5,13 +5,14 @@ import { IconUpload, IconX } from "@tabler/icons-react";
 import { useDropzone } from "react-dropzone";
 import socket from "../socket";
 import { cn } from "../lib/utils";
+import { HoverBorderGradient } from "../components/ui/bordergradient/hover-border-gradient";
 
 const FileShare = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [receivedFiles, setReceivedFiles] = useState<{ name: string; url: string }[]>([]);
   const [connectionEstablished, setConnectionEstablished] = useState(false);
   const [roomId, setRoomId] = useState<string | null>(null);
-  const [isHovering, setIsHovering] = useState(false);
+  const [fileSent, setFileSent] = useState(false);
 
   const peerConnection = useRef<RTCPeerConnection | null>(null);
   const dataChannel = useRef<RTCDataChannel | null>(null);
@@ -33,10 +34,12 @@ const FileShare = () => {
 
   const handleRemove = useCallback(() => {
     setFiles([]);
+    setFileSent(false);
   }, []);
 
   const handleFileChange = useCallback((newFiles: File[]) => {
     setFiles(newFiles);
+    setFileSent(false);
   }, []);
 
   const sendFile = useCallback(async () => {
@@ -57,6 +60,13 @@ const FileShare = () => {
     }
 
     console.log("✅ File sent successfully");
+    setFileSent(true);
+
+    // Optional: auto-reset sent status after 3 seconds
+    setTimeout(() => {
+      setFileSent(false);
+      setFiles([]);
+    }, 3000);
   }, [files]);
 
   const setupDataChannelListeners = (channel: RTCDataChannel) => {
@@ -162,126 +172,106 @@ const FileShare = () => {
     multiple: false,
     noClick: true,
     onDrop: handleFileChange,
-    onDropRejected: (error) => console.error("Drop rejected:", error),
-    onDragEnter: () => setIsHovering(true),
-    onDragLeave: () => setIsHovering(false),
-    onDragOver: () => setIsHovering(true),
   });
 
   return (
     <div className="w-full p-6" {...getRootProps()}>
-      <div
-        className={cn(
-          "p-10 rounded-lg cursor-pointer w-full relative overflow-hidden group transition-all duration-200",
-          isHovering ? "ring-4 ring-blue-400 bg-blue-50 dark:bg-blue-950" : ""
-        )}
-        onClick={(e) => {
-          const el = e.target as Element;
-          const isInteractive = el.closest("button") || el.closest("svg") || el.closest("a");
-          if (!isInteractive) handleClick();
-        }}
-      >
-        <input {...getInputProps()} />
-        <input
-          ref={fileInputRef}
-          type="file"
-          className="hidden"
-          onChange={(e) => handleFileChange(Array.from(e.target.files || []))}
-        />
+      <input {...getInputProps()} />
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        onChange={(e) => handleFileChange(Array.from(e.target.files || []))}
+      />
 
-        <div
-          className="absolute inset-0 bg-cover bg-center z-0"
-          style={{
-            backgroundImage: "url('/assets/back.jpg')",
-            maskImage: "radial-gradient(ellipse at center, white, transparent)",
-            WebkitMaskImage: "radial-gradient(ellipse at center, white, transparent)",
-          }}
-        />
+      <div className="w-full max-w-xl mx-auto space-y-6">
+        
 
-        <div className="relative z-10 flex flex-col items-center justify-center">
-          <p className="text-neutral-700 dark:text-neutral-300 font-bold text-base">Upload File</p>
-          <p className="text-neutral-400 dark:text-neutral-400 text-base mt-2">
-            Drag & drop or click to upload
-          </p>
-
-          <div className="relative w-full mt-10 max-w-xl mx-auto">
-            {files.length > 0 &&
-              files.map((file, idx) => (
-                <div
-                  key={idx}
-                  className="bg-white dark:bg-neutral-900 flex flex-col items-start p-4 mt-4 w-full mx-auto rounded-md shadow-sm relative"
-                >
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemove();
-                    }}
-                    className="absolute top-2 right-2 text-white"
-                  >
-                    <IconX className="w-5 h-5" />
-                  </button>
-
-                  <div className="flex justify-between w-full items-center gap-4">
-                    <p className="text-base truncate max-w-xs text-neutral-700 dark:text-neutral-300">
-                      {file.name}
-                    </p>
-                    <p className="text-sm rounded-lg px-2 py-1 dark:bg-neutral-800 text-neutral-600 dark:text-white">
-                      {(file.size / (1024 * 1024)).toFixed(2)} MB
-                    </p>
-                  </div>
-
-                  <p className="text-sm mt-2 text-neutral-500 dark:text-neutral-400">
-                    {connectionEstablished ? "Ready to send" : "Waiting for peer..."}
-                  </p>
-
-                  {connectionEstablished && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        sendFile();
-                      }}
-                      className="mt-4 px-4 py-1.5 text-sm font-medium rounded-md bg-blue-500 text-white hover:bg-blue-600 transition-all"
-                    >
-                      Send
-                    </button>
-                  )}
-                </div>
-              ))}
-
-            {!files.length && (
-              <div
-                onClick={handleClick}
-                className="bg-white dark:bg-neutral-900 flex flex-col items-center justify-center h-32 mt-4 w-full max-w-[8rem] mx-auto rounded-md shadow-lg transition-all hover:shadow-xl hover:ring-2 hover:ring-blue-400"
-              >
-                <IconUpload className="w-10 h-10 text-neutral-300 dark:text-neutral-700" />
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-2">Browse</p>
-              </div>
-            )}
-          </div>
-
-          {receivedFiles.length > 0 && (
-            <div className="mt-8 w-full max-w-xl">
-              <h3 className="text-center text-lg font-semibold mb-2 text-neutral-700 dark:text-neutral-200">
-                Received Files
-              </h3>
-              {receivedFiles.map((file, i) => (
-                <div
-                  key={i}
-                  className="bg-white dark:bg-neutral-800 p-3 rounded shadow my-2 flex justify-between items-center"
-                >
-                  <span className="truncate max-w-[70%] text-sm dark:text-white">{file.name}</span>
-                  <a
-                    href={file.url}
-                    download={file.name}
-                    className="text-blue-500 text-sm hover:underline"
-                  >
-                    Download
-                  </a>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Upload Button */}
+        <div className="flex justify-center">
+          <HoverBorderGradient
+            as="button"
+            onClick={handleClick}
+            containerClassName="rounded-lg p-[2px] bg-gradient-to-r from-grey-400 via-white-300 to-grey-500"
+            className="bg-white dark:bg-black text-black dark:text-white px-8 py-12 w-full text-center space-y-3"
+          >
+            <IconUpload className="w-8 h-8 mx-auto mb-2" />
+            <p className="font-semibold text-lg">Upload File</p>
+            <p className="text-sm text-gray-500 dark:text-neutral-400">Upload or Drag your files here</p>
+          </HoverBorderGradient>
         </div>
+
+        {/* File Preview & Send */}
+        {files.length > 0 && (
+          <div className="bg-white dark:bg-neutral-900 p-4 rounded-md shadow-sm relative">
+            <button
+              onClick={handleRemove}
+              className="absolute top-2 right-2 text-neutral-500 hover:text-red-500"
+            >
+              <IconX className="w-5 h-5" />
+            </button>
+            <p className="text-neutral-700 dark:text-neutral-300 font-medium truncate">{files[0].name}</p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+              {(files[0].size / (1024 * 1024)).toFixed(2)} MB
+            </p>
+            <p className="text-sm mt-2 text-neutral-500 dark:text-neutral-400">
+              {connectionEstablished ? "Ready to send" : "Waiting for peer..."}
+            </p>
+
+            {/* Styled Send Button */}
+            <div className="mt-4 flex justify-center">
+              <HoverBorderGradient
+                as="button"
+                onClick={() => {
+                  if (connectionEstablished && !fileSent) sendFile();
+                }}
+                containerClassName={cn(
+                  "rounded-lg p-[2px]",
+                  (!connectionEstablished || fileSent) && "opacity-50 cursor-not-allowed"
+                )}
+                className={cn(
+                  "bg-white dark:bg-black text-black dark:text-white px-6 py-3 text-sm font-semibold",
+                  "transition-all duration-300 w-full flex items-center justify-center gap-2"
+                )}
+              >
+                {fileSent ? (
+                  <>
+                    <span>✔️</span>
+                    <span>Sent</span>
+                  </>
+                ) : connectionEstablished ? (
+                  "Send File"
+                ) : (
+                  "Waiting for Peer..."
+                )}
+              </HoverBorderGradient>
+            </div>
+          </div>
+        )}
+
+        {/* Received Files */}
+        {receivedFiles.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-center text-lg font-semibold mb-2 text-neutral-700 dark:text-neutral-200">
+              Received Files
+            </h3>
+            {receivedFiles.map((file, i) => (
+              <div
+                key={i}
+                className="bg-white dark:bg-neutral-800 p-3 rounded shadow my-2 flex justify-between items-center"
+              >
+                <span className="truncate max-w-[70%] text-sm dark:text-white">{file.name}</span>
+                <a
+                  href={file.url}
+                  download={file.name}
+                  className="text-blue-500 text-sm hover:underline"
+                >
+                  Download
+                </a>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

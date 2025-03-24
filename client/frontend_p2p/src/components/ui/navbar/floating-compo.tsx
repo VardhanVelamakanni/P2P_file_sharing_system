@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
 import { cn } from "../../../lib/utils";
 
 export function SidebarDemo() {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
 
   const links = [
     { label: "Share", href: "#", icon: <IconTransfer className="h-5 w-5" /> },
