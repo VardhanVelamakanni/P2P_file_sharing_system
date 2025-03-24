@@ -1,6 +1,6 @@
 # Peer-to-Peer File Sharing App
 
-> Status: Still under active development. Features are being added and improved regularly.
+> !!Status: Still under developmet!!
 
 This is a real-time peer-to-peer file sharing web application built using WebRTC, Socket.IO, React, and TypeScript. It allows two users to join the same room and share files directly through a secure, serverless data channel — no file is stored on the server.
 
