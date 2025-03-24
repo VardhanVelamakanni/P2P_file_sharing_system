@@ -43,9 +43,6 @@ These are features planned or under development.
 - Multiple File Support  
   Send multiple files in one session.
 
-- Mobile Responsiveness  
-  Optimize the app experience for mobile devices.
-
 - Connection Timeout/Error Handling  
   Notify users when a peer disconnects or connection fails.
 
