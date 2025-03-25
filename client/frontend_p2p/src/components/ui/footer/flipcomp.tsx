@@ -3,11 +3,10 @@ import { FlipWords } from "../footer/flip-words";
 
 export function FlipWordsDemo() {
   const names = [
-    "Name 1 (writes code)",
-    "Name 2 (breaks things)",
-    "Name 3 (fixes it later)",
-    "Name 4 (says 'it works')",
-    "Name 5 (still confused)",
+    "Hemavardhan (writes code)",
+    "Ganesh (breaks things)",
+    "Avinash (fixes it later)",
+    "Koushik (still confused)",
   ];
 
   return (
