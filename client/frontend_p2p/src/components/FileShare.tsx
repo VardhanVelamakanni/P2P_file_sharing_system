@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { IconUpload, IconX } from "@tabler/icons-react";
 import { useDropzone } from "react-dropzone";
+import { motion, AnimatePresence } from "framer-motion";
 import socket from "../socket";
 import { cn } from "../lib/utils";
 import { HoverBorderGradient } from "../components/ui/bordergradient/hover-border-gradient";
@@ -62,7 +63,6 @@ const FileShare = () => {
     console.log("✅ File sent successfully");
     setFileSent(true);
 
-    // Optional: auto-reset sent status after 3 seconds
     setTimeout(() => {
       setFileSent(false);
       setFiles([]);
@@ -185,10 +185,25 @@ const FileShare = () => {
       />
 
       <div className="w-full max-w-xl mx-auto space-y-6">
-        
+        {/* Room ID Display */}
+        {roomId && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6 }}
+            className="absolute top-4 right-6 bg-neutral-800 text-white text-xs px-3 py-1 rounded-full shadow"
+          >
+            Room ID: {roomId}
+          </motion.div>
+        )}
 
         {/* Upload Button */}
-        <div className="flex justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+          className="flex justify-center"
+        >
           <HoverBorderGradient
             as="button"
             onClick={handleClick}
@@ -199,11 +214,16 @@ const FileShare = () => {
             <p className="font-semibold text-lg">Upload File</p>
             <p className="text-sm text-gray-500 dark:text-neutral-400">Upload or Drag your files here</p>
           </HoverBorderGradient>
-        </div>
+        </motion.div>
 
         {/* File Preview & Send */}
         {files.length > 0 && (
-          <div className="bg-white dark:bg-neutral-900 p-4 rounded-md shadow-sm relative">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="bg-white dark:bg-neutral-900 p-4 rounded-md shadow-sm relative"
+          >
             <button
               onClick={handleRemove}
               className="absolute top-2 right-2 text-neutral-500 hover:text-red-500"
@@ -218,7 +238,6 @@ const FileShare = () => {
               {connectionEstablished ? "Ready to send" : "Waiting for peer..."}
             </p>
 
-            {/* Styled Send Button */}
             <div className="mt-4 flex justify-center">
               <HoverBorderGradient
                 as="button"
@@ -246,12 +265,17 @@ const FileShare = () => {
                 )}
               </HoverBorderGradient>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Received Files */}
         {receivedFiles.length > 0 && (
-          <div className="mt-6">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="mt-4"
+          >
             <h3 className="text-center text-lg font-semibold mb-2 text-neutral-700 dark:text-neutral-200">
               Received Files
             </h3>
@@ -270,7 +294,7 @@ const FileShare = () => {
                 </a>
               </div>
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

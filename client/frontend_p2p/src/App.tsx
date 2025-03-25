@@ -2,6 +2,7 @@ import { SidebarDemo } from './components/ui/navbar/floating-compo';
 import { CoverDemo } from './components/ui/cover/cover-copm';
 import { BackgroundWrapper } from './components/ui/cover/BackgroundWrapper';
 import { StickyScrollRevealDemo } from './components/ui/component2/stickycomp';
+import { FlipWordsDemo } from './components/ui/footer/flipcomp';
 import FileShare from './components/FileShare';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
@@ -11,6 +12,7 @@ function HomePage() {
       <SidebarDemo />
       <CoverDemo />
       <StickyScrollRevealDemo />
+      <FlipWordsDemo/>
     </BackgroundWrapper>
   );
 }

@@ -58,15 +58,9 @@ export function CoverDemo() {
 
       {/* Room ID Heading + Upload UI */}
       {joined && (
-        <div className="w-full max-w-4xl mx-auto z-20 space-y-6 pt-20">
-          {/* Room ID Display */}
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-center bg-clip-text text-transparent bg-gradient-to-b from-neutral-800 via-neutral-700 to-neutral-700 dark:from-neutral-100 dark:via-neutral-200 dark:to-neutral-300">
-            Room ID: <span className="font-mono">{roomCode}</span>
-          </h2>
-
-          {/* File Upload */}
+        
           <FileShare />
-        </div>
+       
       )}
     </div>
   );
