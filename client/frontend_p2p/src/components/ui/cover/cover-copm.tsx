@@ -10,11 +10,11 @@ export function CoverDemo() {
   const [roomCode, setRoomCode] = useState("");
 
   const placeholders = [
-    "Enter Room Code",
-    "Your secret warp key",
-    "Room ID please...",
-    "Drop a room code to enter",
-    "Where are we sending files?",
+    "Room Code,No peeking",
+    "Got a Code?",
+    "Eg:123,ABC",
+    "Ready to Connect?",
+    "The Gate needs a CODE",
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,9 +41,10 @@ export function CoverDemo() {
   return (
     <div className="flex flex-col items-center justify-start pt-32 relative w-full">
       {/* Main Title */}
-      <h1 className="text-4xl md:text-4xl lg:text-6xl font-semibold max-w-7xl mx-auto text-center absolute top-8 left-0 right-0 z-20 bg-clip-text text-transparent bg-gradient-to-b from-neutral-800 via-neutral-700 to-neutral-700 dark:from-neutral-800">
-        Share files at <Cover>warp speed</Cover>
-      </h1>
+      <h1 className="text-xl md:text-4xl lg:text-5xl font-semibold max-w-7xl mx-auto text-center absolute top-8 left-0 right-0 z-20 bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-3=800">
+  Just Drop: Quick drop,<Cover>Instant pop</Cover>
+</h1>
+
 
       {/* Room Input */}
       {!joined && (

@@ -12,7 +12,7 @@ export function FlipWordsDemo() {
   return (
     <div className="flex justify-center items-center px-4 py-0 my-0 leading-none h-auto mb-20">
       <div className="text-4xl font-normal text-neutral-600 dark:text-neutral-400 text-center leading-none py-0 my-0">
-        This project was built by <br />
+        This Application Is built by <br />
         <FlipWords words={names} />
       </div>
     </div>

@@ -3,10 +3,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { IconUpload, IconX } from "@tabler/icons-react";
 import { useDropzone } from "react-dropzone";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import socket from "../socket";
 import { cn } from "../lib/utils";
 import { HoverBorderGradient } from "../components/ui/bordergradient/hover-border-gradient";
+import { Vortex } from "../components/ui/uploadback/vortex";
 
 const FileShare = () => {
   const [files, setFiles] = useState<File[]>([]);
@@ -51,7 +52,9 @@ const FileShare = () => {
     const buffer = await file.arrayBuffer();
     const totalChunks = Math.ceil(buffer.byteLength / chunkSize);
 
-    dataChannel.current.send(JSON.stringify({ type: "metadata", name: file.name, size: buffer.byteLength }));
+    dataChannel.current.send(
+      JSON.stringify({ type: "metadata", name: file.name, size: buffer.byteLength })
+    );
 
     for (let i = 0; i < totalChunks; i++) {
       const start = i * chunkSize;
@@ -175,7 +178,7 @@ const FileShare = () => {
   });
 
   return (
-    <div className="w-full p-6" {...getRootProps()}>
+    <div className="w-full p-6 relative z-10" {...getRootProps()}>
       <input {...getInputProps()} />
       <input
         ref={fileInputRef}
@@ -183,6 +186,14 @@ const FileShare = () => {
         className="hidden"
         onChange={(e) => handleFileChange(Array.from(e.target.files || []))}
       />
+
+      {/* Vortex Background Animation */}
+      <div className="absolute inset-0 -z-10">
+        <Vortex
+          backgroundColor="black"
+          className="w-full h-full flex items-center justify-center"
+        />
+      </div>
 
       <div className="w-full max-w-xl mx-auto space-y-6">
         {/* Room ID Display */}
@@ -212,7 +223,9 @@ const FileShare = () => {
           >
             <IconUpload className="w-8 h-8 mx-auto mb-2" />
             <p className="font-semibold text-lg">Upload File</p>
-            <p className="text-sm text-gray-500 dark:text-neutral-400">Upload or Drag your files here</p>
+            <p className="text-sm text-gray-500 dark:text-neutral-400">
+              Upload or Drag your files here
+            </p>
           </HoverBorderGradient>
         </motion.div>
 
@@ -274,7 +287,7 @@ const FileShare = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="mt-4"
+            className="mt-2"
           >
             <h3 className="text-center text-lg font-semibold mb-2 text-neutral-700 dark:text-neutral-200">
               Received Files
