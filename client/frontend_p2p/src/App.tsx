@@ -14,8 +14,9 @@ function HomePage() {
       <StickyScrollRevealDemo />
       <FlipWordsDemo/>
     </BackgroundWrapper>
-  );
-}
+  );[
+    
+  ]}
 
 function App() {
   return (
