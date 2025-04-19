@@ -1,86 +1,52 @@
 "use client";
-import React, { useCallback, useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { cn } from "../../../lib/utils";
 
-export const FlipWords = ({
-  words,
-  duration = 3000,
-  className,
-}: {
-  words: string[];
-  duration?: number;
-  className?: string;
-}) => {
-  const [currentWord, setCurrentWord] = useState(words[0]);
-  const [isAnimating, setIsAnimating] = useState<boolean>(false);
+import React from "react";
+import { InfiniteMovingCards } from "../footer/flipcomp";
 
-  const startAnimation = useCallback(() => {
-    const nextIndex = (words.indexOf(currentWord) + 1) % words.length;
-    setCurrentWord(words[nextIndex]);
-    setIsAnimating(true);
-  }, [currentWord, words]);
-
-  useEffect(() => {
-    if (!isAnimating) {
-      const timeout = setTimeout(startAnimation, duration);
-      return () => clearTimeout(timeout);
-    }
-  }, [isAnimating, duration, startAnimation]);
-
+export function InfiniteMovingCardsDemo() {
   return (
-    <AnimatePresence
-      onExitComplete={() => {
-        setIsAnimating(false);
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 100, damping: 10 }}
-        exit={{
-          opacity: 0,
-          y: -40,
-          x: 40,
-          filter: "blur(8px)",
-          scale: 2,
-          position: "absolute",
-        }}
-        className={cn(
-          "z-10 inline-flex items-center text-left text-neutral-900 dark:text-neutral-100 leading-none m-0 p-0",
-          className
-        )}
-        key={currentWord}
-      >
-        {currentWord.split(" ").map((word, wordIndex) => (
-          <motion.span
-            key={word + wordIndex}
-            initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{
-              delay: wordIndex * 0.3,
-              duration: 0.3,
-            }}
-            className="inline-block whitespace-nowrap"
-          >
-            {word.split("").map((letter, letterIndex) => (
-              <motion.span
-                key={word + letterIndex}
-                initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{
-                  delay: wordIndex * 0.3 + letterIndex * 0.05,
-                  duration: 0.2,
-                }}
-                className="inline-block"
-              >
-                {letter}
-              </motion.span>
-            ))}
-            <span className="inline-block">&nbsp;</span>
-          </motion.span>
-        ))}
-      </motion.div>
-    </AnimatePresence>
+    <div className="h-[20rem] flex flex-col items-center justify-center relative overflow-hidden rounded-md antialiased bg-white dark:bg-black dark:bg-grid-white/[0.1]">
+      {/* Remove internal padding/gap above and below */}
+      <div className="w-full">
+        <InfiniteMovingCards
+          items={testimonials}
+          
+          speed="slow"
+        />
+      </div>
+    </div>
   );
-};
+}
+
+const testimonials = [
+  {
+    quote:
+      "Came up with the big idea, led backend wizardry, and even dabbled in frontend spells. Basically the architect who made sure the whole castle didn’t fall apart.",
+    name: "Hemavardhan",
+    title: "Backend • Frontend • Idea Machine",
+  },
+  {
+    quote:
+      "Got sockets talking and WebRTC waving — made real-time feel real. He’s the reason our app doesn’t ghost users on sharing files.",
+    name: "Satya Koushik",
+    title: "WebSockets • WebRTC • Real-time Whisperer",
+  },
+  {
+    quote:
+      "Styled the frontend into a work of art. If you’ve ever admired the UI, you’ve witnessed Avinash’s pixel-perfect sorcery.",
+    name: "Avinash Reddy",
+    title: "Frontend Developer • Pixel Perfectionist",
+  },
+  {
+    quote:
+      "Brought the frontend to life with flair and flair. Made sure users enjoy not just what it does on paper, but how it looks doing it.",
+    name: "Ganesh",
+    title: "Frontend Developer • Design Enchanter",
+  },
+  {
+    quote:
+      "Guided us through bugs and breakdowns. Debugged like a caffeinated senior dev trapped in a chatbot. Always there, never tired.",
+    name: "ChatGPT",
+    title: "Tech Support • Sanity Saver",
+  },
+];

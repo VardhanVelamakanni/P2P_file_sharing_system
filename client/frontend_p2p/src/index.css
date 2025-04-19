@@ -9,3 +9,22 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+:root {
+  --animation-duration: 20s;
+  --animation-direction: forwards;
+}
+.animate-scroll {
+  animation: scroll var(--animation-duration, 40s) linear infinite var(--animation-direction, forwards);
+}
+
+ 
+@layer utilities {
+  @keyframes scroll {
+    0% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+}
