@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
@@ -8,22 +7,28 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
+
+// Use environment variable for frontend URL in CORS
+const CLIENT_URL = process.env.CLIENT_URL || '*';
+const PORT = process.env.PORT || 5000;
+
+// Socket.IO with CORS
 const io = new Server(server, {
   cors: {
-    origin: '*', // Replace with your frontend URL in production
+    origin: CLIENT_URL,
     methods: ['GET', 'POST']
   }
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({ origin: CLIENT_URL }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded files statically
+// Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// === Multer setup for file upload ===
+// === Multer setup ===
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'uploads/');
@@ -35,7 +40,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// === File Upload Endpoint ===
+// === Upload Endpoint ===
 app.post('/upload', upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
@@ -48,7 +53,6 @@ app.post('/upload', upload.single('file'), (req, res) => {
     path: `/uploads/${req.file.filename}`
   };
 
-  // Notify other users in the same room via socket
   if (roomId) {
     io.to(roomId).emit('file-shared', fileInfo);
     console.log(`📁 File shared in room: ${roomId}`);
@@ -60,7 +64,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
   });
 });
 
-// === WebSocket Events (Socket.IO) ===
+// === WebSocket Events ===
 io.on('connection', (socket) => {
   console.log(`⚡ User connected: ${socket.id}`);
 
@@ -88,7 +92,6 @@ io.on('connection', (socket) => {
 });
 
 // === Start Server ===
-const PORT = 5000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
